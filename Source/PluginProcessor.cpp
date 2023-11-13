@@ -154,8 +154,8 @@ void RobotizerAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juc
                     amplitude = abs(channelData[i]);
                 }
             }
-            k.perform(inputarray, outputarray, false);
-            for (auto i = 0; i < temp; ++i)
+            k.perform(inputarray, outputarray, false); // computing FFT of given array
+            for (auto i = 0; i < temp; ++i) // zeroing components for negative frequencies
             {
                 if (i == 0 || i == temp / 2)
                 {
@@ -171,8 +171,8 @@ void RobotizerAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juc
                 }
             }
             std::complex<float> hilbertcomp[512];
-            k.perform(outputarray, hilbertcomp, true);
-            float mh[512];
+            k.perform(outputarray, hilbertcomp, true); //reverse FFT/Hilbert
+            float mh[512]; // Phase-shifted signal
             float normalizer = 0;
             for (auto i = 0; i < temp; ++i)
             {
@@ -193,16 +193,10 @@ void RobotizerAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juc
                 auto sbuSinValue = getNextSample(0);
                 auto sblCosValue = getCosNextSample(1);
                 auto sblSinValue = getNextSample(1);
-                float sbu = data[i] * sbuCosValue - mh[i] * sbuSinValue;
-                float sbl = data[i] * sblCosValue + mh[i] * sblSinValue;
+                float sbu = data[i] * sbuCosValue - mh[i] * sbuSinValue; //upper sideband
+                float sbl = data[i] * sblCosValue + mh[i] * sblSinValue; //lower sideband
 
                 data[i] = ((100 - wetdry) / 100) * (data[i]) + (wetdry / 100) * (signalAmp * data[i] + sbuAmp * sbu + sblAmp * sbl);
-                //data[i] = mh[i];
-                //if (data[i] > 0)
-                //    data[i] = 1;
-                //else if (data[i] < 0)
-                //    data[i] = -1;
-
             }
         }
     }
